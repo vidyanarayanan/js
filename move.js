@@ -8,6 +8,7 @@ function goToTarget(locationX, locationY) {
 
 function bruteForceGoToTarget(locationX, locationY) {
     let commands = [];
+
     if (locationX == 0) {
         if (locationY == 0) {
             // throw new Error("Target is at current spot.");
@@ -19,8 +20,8 @@ function bruteForceGoToTarget(locationX, locationY) {
                 locationY = -locationY;
             }
             locationY--;
-            commands = goForward(locationY, commands);
 
+            commands = goForward(locationY, commands);
         }
     } else {
         if (locationY == 0) {
@@ -61,7 +62,10 @@ function bruteForceGoToTarget(locationX, locationY) {
         }
     }
 
-    return commands;
+    let target = [locationX,locationY];
+    const displacementSpec = {target, commands};
+
+    return displacementSpec;
 }
 
 
