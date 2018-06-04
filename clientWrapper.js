@@ -185,18 +185,15 @@ function simulateAgentAction(simulation, agent, action, agentMode) {
     return new Promise((resolve, reject) => {
         return performAgentAction(simulation, agent, action, agentMode)
             .then((actionOut) => {
-                console.log("Action Submitted " + action + " ***\n ******\n" + JSON.stringify(actionOut));
-
-                return simulateStep(simulation)
+                    console.log("Performing action " + action);
+                    return simulateStep(simulation)
                     .then((stepOut) => {
-                        console.log("Step Simulated " + simulation + " ***\n ******\n" + JSON.stringify(stepOut));
                         return getAgentStatus(simulation, agent)
                             .then((agentStatus) => {
-                                console.log("Retrieved Agent Status - Simulation:" + simulation + ", Agent:" + agent + "***\n ******\n" + agentStatus);
+                                console.log("Performed action " + action);
                                 resolve(agentStatus);
                             })
                             .catch((statusError) => {
-                                console.log("Error Retrieving Agent Status - Simulation:" + simulation + ", Agent:" + agent + "***\n ******\n" + statusError);
                                 reject(statusError);
                             });
                     })
@@ -225,16 +222,14 @@ function executeActionArray(simulation, agent, actions, mode) {
 
     function performAction() {
         if (index < actions.length) {
-            simulateAgentAction(simulation, agent, actions[index++], mode)
+            return simulateAgentAction(simulation, agent, actions[index++], mode)
                 .then(() => {
-                    performAction();
+                    return performAction();
                 });
         }
     }
-
-
-    performAction();
-
+    
+    return performAction();
 }
 
 /**
