@@ -1,23 +1,8 @@
 'use strict';
 const client = require('./clientWrapper');
 const move = require('./move');
+const reset = (process.env.RESET_SIMULATOR == 0);
 
-// function createActionArray() {
-//     // console.log("Agent " + agentId + " at your command. What should I do? You can enter one of these: \n******");
-//     // console.log(Object.values(AgentAction));
-//
-//     //TODO calculate actions based on response.status
-//     /*
-//      let actions = [AgentAction.pickUp,
-//      AgentAction.turnLeft,
-//      AgentAction.moveForward,
-//      AgentAction.drop];
-//      let mode = "1";
-//      executeActionArray(simulationId, agentId, actions, mode);
-//      */
-//
-// }
-//
 
 function initClient() {
     return client.init(env);
@@ -65,33 +50,50 @@ function getCommandsToGoTo(simulation, agent, location) {
     let locationY = location[1];
 
     return move.goToTarget(locationX, locationY);
-
 }
+
+/**
+ * Calculate relative home distance after the move
+ * @param homeLocation
+ * @param targetLocation
+ * @returns {*[]}
+ */
+function getNewHomeCoordinates(homeLocation, targetLocation) {
+    let newLocX = homeLocation[0] - targetLocation[0];
+    let newLocY = homeLocation[1] - targetLocation[1];
+    let newLoc = [newLocX, newLocY];
+    return newLoc;
+}
+
 
 
 const env = "HW1";
 initClient()
     .then((response) => {
+        if (!reset) {
 
-        const simulationId = response.simulationId;
-        const agentId = parseInt(response.agents, 10) - 1;
-        console.log("Your Simulator Client is ready - here is the status \n" + JSON.stringify(response, 0, 2));
+            const simulationId = response.simulationId;
+            const agentId = parseInt(response.agents, 10) - 1;
+            console.log("Your Simulator Client is ready - here is the status \n" + JSON.stringify(response, 0, 2));
 
-        let agentStatus = response.agentStatus;
-        let payload = getLocation(agentStatus, "Payloads", 0); //.agentData.Scan.Payloads;
-        let home = getLocation(agentStatus, "Home", 0);
+            let agentStatus = response.agentStatus;
+            let payload = getLocation(agentStatus, "Payloads", 0); //.agentData.Scan.Payloads;
+            let home = getLocation(agentStatus, "Home", 0);
 
-        // console.log("\n\nHome: "  + home);
-        console.log("\npayload: " + payload);
+            // console.log("\n\nHome: "  + home);
+            console.log("\npayload: " + payload);
 
-        let actions = getCommandsToGoTo(simulationId, agentId, payload);
-        actions.push(client.AgentAction.pickUp);
-        let gthActions = getCommandsToGoTo(simulationId, agentId, home);
-        gthActions.forEach((action) => actions.push(action));
-        actions.push(client.AgentAction.drop);
+            let spec = getCommandsToGoTo(simulationId, agentId, payload);
+            let actions = spec.commands;
+            actions.push(client.AgentAction.pickUp);
+            let newHomeCoordinates = getNewHomeCoordinates(home, spec.target);
+            let homeSpec = getCommandsToGoTo(simulationId, agentId, newHomeCoordinates);
+            homeSpec.commands.forEach((action) => actions.push(action));
+            actions.push(client.AgentAction.drop);
 
-        client.executeActionArray(simulationId, agentId, actions, "1");
-        
+            client.executeActionArray(simulationId, agentId, actions, "1");
+        }
+
     })
     .catch((error) => {
         console.log("Error Initializing Simulation Client " + error);
