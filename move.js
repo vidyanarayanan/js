@@ -61,11 +61,8 @@ function bruteForceGoToTarget(locationX, locationY) {
             }
         }
     }
-
-    let target = [locationX,locationY];
-    const displacementSpec = {target, commands};
-
-    return displacementSpec;
+    
+    return commands;
 }
 
 
