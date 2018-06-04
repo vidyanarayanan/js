@@ -12,7 +12,6 @@ const AgentAction = {
     drop: "drop",
     idle: "idle"
 };
-const env = "HW1";
 
 
 /**
@@ -227,11 +226,15 @@ function executeActionArray(simulation, agent, actions, mode) {
     function performAction() {
         if (index < actions.length) {
             simulateAgentAction(simulation, agent, actions[index++], mode)
-                .then(()=>performAction());
+                .then(() => {
+                    performAction();
+                });
         }
     }
 
+
     performAction();
+
 }
 
 /**
@@ -250,12 +253,12 @@ function init(env) {
                         let response = {
                             "simulationId": createResponse.simulationId,
                             "agents": parseInt(createResponse.simulationData.NumAgents),
-                            "createResponse": createResponse,
-                            "startResponse": startResponse
+                            "createResponse": getObject(createResponse),
+                            "startResponse": getObject(startResponse)
                         };
                         return getAgentStatus(response.simulationId, response.agents - 1)
                             .then((status) => {
-                                response.status = status;
+                                response.agentStatus = getObject(status);
                                 resolve(response);
                             })
                             .catch((error) => {
@@ -272,29 +275,27 @@ function init(env) {
     });
 }
 
+/**
+ * Gets the Object form if data is a Json string.
+ * This is a workaround for the double encoding by JSON.stringify since at times webservice responses are JSON
+ * strings and at times Objects
+ * @param data
+ * @returns {*}
+ */
+function getObject(data) {
+    try {
+        return JSON.parse(data);
+    }
+    catch(parseErr) {
+        return data;
+    }
+}
 
-init(env)
-    .then((response) => {
-        const simulationId = response.simulationId;
-        const agentId = parseInt(response.agents, 10) - 1;
-
-        console.log("Your Simulator Client is ready - here is the status " + response);
-        // console.log("Agent " + agentId + " at your command. What should I do? You can enter one of these: \n******");
-        // console.log(Object.values(AgentAction));
-
-/**/
-        let actions = [AgentAction.pickUp,
-            AgentAction.turnLeft,
-            AgentAction.moveForward,
-            AgentAction.drop];
-        let mode = "1";
-        executeActionArray(simulationId, agentId, actions, mode);
-        /**/
-
-    })
-    .catch((error) => {
-        console.log("Error Initializing Simulation Client " + error);
-    });
-
-
-
+module.exports = {
+    AgentAction         : AgentAction,
+    executeActionArray  : executeActionArray,
+    getAgentStatus      : getAgentStatus,
+    getObject           : getObject,
+    init                : init,
+    simulateAgentAction : simulateAgentAction
+}
