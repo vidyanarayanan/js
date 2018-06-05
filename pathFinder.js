@@ -1,11 +1,19 @@
 'use strict';
-
+const client = require('./clientWrapper');
 const Direction = {
     "Down" : "down",
     "Up"   : "up",
     "Left" : "left",
     "Right": "right"
 }
+
+const STARTING = 0;
+const INITVAL =  999;
+const OBSTACLE = 99999;
+
+const Cost = {MoveCost : 1, SingleTurnCost : 1};
+const x = 1, y = 0;
+
 
 function createField(wall, home, payload) {
     let field = {};
@@ -36,11 +44,11 @@ function createField(wall, home, payload) {
     });
     let matrix = initializeMatrix(rows, cols, 1);
     let agentIndex = [back, right];
-    matrix[back][right] = 0; //or is it -1?
+    matrix[back][right] = STARTING; //or is it -1?
     let homeIndex = getAbsoluteIndex(home, agentIndex);
     let payloadIndex = getAbsoluteIndex(payload, agentIndex);
-    matrix[homeIndex[0]][homeIndex[1]] = 99;
-    matrix[payloadIndex[0]][payloadIndex[1]] = 99;
+    matrix[homeIndex[0]][homeIndex[1]] = OBSTACLE;
+    matrix[payloadIndex[0]][payloadIndex[1]] = OBSTACLE;
     field.agentIndex =agentIndex;
     field.homeIndex = homeIndex;
     field.payloadIndex = payloadIndex;
@@ -55,7 +63,7 @@ function initializeMatrix(rows, cols, value) {
     for (let i=0; i < rows; i++) {
         let row = [];
         for (let j=0; j < cols; j++) {
-            row[j] = 1;
+            row[j] = INITVAL;
             //Fill the array... borders are walls with value = 99
         }
         matrix[i] = row;
@@ -104,64 +112,161 @@ function generateSubMatrix(matrix, src, target, direction) {
  * @param targetDirection
  * @returns {*}
  */
-function costOfDirectionChange(currentDirection, targetDirection){
+function calculateDirectionChange(currentDirection, targetDirection, commandInput){
     let cost;
+    let commands = commandInput;
 
     if (targetDirection == Direction.Down) {
         switch (currentDirection) {
             case Direction.Up :
-                cost = 2;
+                commands.push(client.AgentAction.turnRight);
+                commands.push(client.AgentAction.turnRight);
+                cost = Cost.SingleTurnCost * 2;
                 break;
             case Direction.Down :
                 cost = 0;
                 break;
             case  Direction.Left :
-                cost = 1;
+                commands.push(client.AgentAction.turnLeft);
+                cost = Cost.SingleTurnCost;
                 break;
             case  Direction.Right :
-                cost = 1;
+                commands.push(client.AgentAction.turnRight);
+                cost = Cost.SingleTurnCost;
                 break;
         }
     } else if (targetDirection == Direction.Left) {
         switch (currentDirection) {
             case Direction.Up :
-                cost = 1;
+                commands.push(client.AgentAction.turnLeft);
+                cost = Cost.SingleTurnCost;
                 break;
             case Direction.Down :
-                cost = 1;
+                commands.push(client.AgentAction.turnRight);
+                cost = Cost.SingleTurnCost;
                 break;
             case  Direction.Left :
                 cost = 0;
                 break;
             case  Direction.Right :
-                cost = 2;
+                commands.push(client.AgentAction.turnLeft);
+                commands.push(client.AgentAction.turnLeft);
+                cost = Cost.SingleTurnCost * 2;
                 break;
         }
     }
-    return cost;
+    return {"commands": commandInput, "cost": cost};
 }
 
+function setCost(matrix, row, col, cost) {
+    if ( matrix[row][col] != OBSTACLE) {
+        matrix[row][col] = cost;
+    }
+}
+
+function getCheapestPath(paths) {
+    if (paths.length < 1) {
+        return null;
+    }
+    paths.sort(function(path1, path2){
+        if (path1.cost < path2.cost) {
+            return -1;
+        }
+        if (path1.cost > path2.cost) {
+            return 1;
+        }
+        return 0;
+    });
+    return paths[0];
+}
+
+function calculatePath(direction, start, ending, constantIndex, cost, matrix, path) {
+    let oneTimeCost = cost;
+        for (let index = start; index <= ending; index++) {
+            let row, col;
+            if (direction == Direction.Down) {
+                row = index;
+                col = constantIndex;
+            } else if (direction == Direction.Left) {
+                col = index;
+                row = constantIndex;
+            }
+            path.cost += oneTimeCost + Cost.MoveCost;
+            // Include turn cost in the next cell, this will be 0 since we start of with agent facing down.
+            setCost(matrix, row, col, oneTimeCost + Cost.MoveCost);
+            path.commands.push(client.AgentAction.moveForward);
+            oneTimeCost = 0;
+        }
+}
+
+
 function updatePaths(matrix, topLeft, bottomRight, src, target, direction) {
-        const x = 1, y = 0;
 
     let destination;
+    let paths =[];
+    //path = {"cost":, instructions, isEdge}
 
     if (src[x] < target[x] ) { // Left
             if (src[y] < target[y]) { //Bottom Left
                 //Two options on the sides - can go either bottom then left, or left then bottom
                 //Option 1, bottom then left.
+
                 destination = [target[y], target[x] -1]; //Will arrive from the right, so stop one short on the x axis
-                let turnCost = costOfDirectionChange(direction, Direction.Down);
-                matrix[src[y] + 1][src[x]] += turnCost; //Include turn cost in the next cell, this will be 0 since we start of with agent facing down.
-                matrix[target[y]][src[x]]++ ; // turn left
+                let path1 = {"cost": 0};
+                let turnSpec = calculateDirectionChange(direction, Direction.Down, []);
+                let turnCost = turnSpec.cost;
+                path1.commands = turnSpec.commands;
+
+                calculatePath(Direction.Down, src[y]+1, target[y], src[x], turnCost, matrix, path1);
+
+                // for (let row = src[y]+1; row <= target[y]; row++) {
+                //     pathCost += turnCost + Cost.MoveCost;
+                //     // Include turn cost in the next cell, this will be 0 since we start of with agent facing down.
+                //     setCost(matrix, row, src[x], turnCost + Cost.MoveCost);
+                //     path1Commands.push(client.AgentAction.moveForward);
+                //     turnCost = 0; //No more turning
+                // }
+
+                matrix[target[y]][src[x]] += Cost.SingleTurnCost; // turn left
+                path1.commands.push(client.AgentAction.turnLeft);
+                calculatePath(Direction.Left, src[x]+1, target[x]-1, target[y], 0, matrix, path1);
+
+                // for (let col = src[x]+1; col <= destination[x]; col++) { //Stop one short, so use destination, instead of target
+                //     pathCost += Cost.MoveCost;
+                //     setCost(matrix, target[y], col, Cost.MoveCost);
+                //     path1Commands.push(client.AgentAction.moveForward);
+                // }
+                // path1.isEdge = true;
+                paths.push(path1);
 
                 //Option 2, left then bottom
-                turnCost = costOfDirectionChange(direction, Direction.Left);
-                matrix[src[y]][src[x]+1] += turnCost;
-                matrix[src[y]][target[x]]++; //turn downwards
+
+                let path2 = {"cost":0, "commands": []};
+                turnSpec = calculateDirectionChange(direction, Direction.Left, path2.commands);
+                turnCost = turnSpec.cost;
+                path2.commands = turnSpec.commands;
+                calculatePath(Direction.Left, src[x]+1, target[x], src[y], turnCost, matrix, path2);
+                // for (let col = src[x]+1; col <= target[x]; col++) {
+                //     pathCost += turnCost + Cost.MoveCost;
+                //     setCost(matrix, src[y], col, turnCost + Cost.MoveCost);
+                //     path2Commands.push(client.AgentAction.moveForward);
+                //     turnCost = 0;
+                // }
+
+                setCost(matrix, src[y], target[x],  matrix[src[y]][target[x]]+turnCost); //turn downwards
+                path2.commands.push(client.AgentAction.turnRight);
+                calculatePath(Direction.Down, src[y], target[y], target[x], 0, matrix, path2);
+                // for (let row = src[y]; row < target[y]; row++) {
+                //     pathCost += Cost.MoveCost;
+                //     setCost(matrix, row, target[x], Cost.MoveCost);
+                //     path2Commands.push(client.AgentAction.moveForward);
+                // }
+                // paths.push({"cost":pathCost, "commands": path2Commands, "isEdge": true});
+                paths.push(path2);
 
             } else if (src[y] == target[y]) { // straight left
-                let turnCost = costOfDirectionChange(direction, Direction.Left);
+                let commands = [];
+                let turnCost = calculateDirectionChange(direction, Direction.Left);
                 destination = [target[y], target[x] -1]; //Will arrive from the right, so stop one short on the x axis
                 if (destination[x] == src[x]) {
                     matrix[src[y]][src[x]] += turnCost;
@@ -171,21 +276,20 @@ function updatePaths(matrix, topLeft, bottomRight, src, target, direction) {
             } else if (src[y] > target[y]) { //Need to move Top Left
                 // Two options for edge traversal: top then left or left then top
                 //option 1, top then left
-                
+
             }
-        }
-    
-    // if (topLeft[0] == src[0] && topLeft[1] == src[1]) {
-    //     //Payload is on the right bottom.
-    //
-    //     if (direction == Direction.Down) {
-    //         matrix[src[0]][src[1]] = 0;
-    //
-    //     }
-    // }
+    } else if (src[x] == target[x]) { // target is on vertical path
+
+
+    } else if (src[x] > target[x]) { //target is to the right
+
+    }
 
     console.log("updated matrix");
     console.log(matrix);
+
+    let cheapestPath = getCheapestPath(paths);
+    console.log(cheapestPath);
     return matrix;
 
 }
