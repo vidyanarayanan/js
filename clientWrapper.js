@@ -2,8 +2,12 @@
 const request = require('request');
 
 const hostname = process.env.SIMULATION_SERVER;
-const apiBase = "https://"+hostname+"/api/";
+const apiBase = "https://" + hostname + "/api/";
 
+/**
+ * Actions of an agent
+ * @type {{moveForward: string, turnLeft: string, turnRight: string, pickUp: string, drop: string, idle: string}}
+ */
 const AgentAction = {
     moveForward: "moveForward",
     turnLeft: "turnLeft",
@@ -15,7 +19,7 @@ const AgentAction = {
 
 
 /**
- * Creates a simulation
+ * Creates a simulation environment.
  * @param env - the name of the environment, example "HW1", "HW2"
  * @returns {Promise}
  */
@@ -271,6 +275,7 @@ function init(env) {
 }
 
 /**
+ * TODO move to a util - doesnt belong here.
  * Gets the Object form if data is a Json string.
  * This is a workaround for the double encoding by JSON.stringify since at times webservice responses are JSON
  * strings and at times Objects
