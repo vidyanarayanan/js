@@ -1,11 +1,27 @@
 'use strict';
 const client = require('./clientWrapper');
 
+/**
+ * Wrapper for the actual method for reaching the target location
+ * Eventually we want Dijkstra's shortest path. However, that requires a costed matrix as input
+ * Generating the costed matrix is going to take a few hours.. for now use this as a wrapper to
+ * get going
+ * @param locationX
+ * @param locationY
+ * @returns {Array}
+ */
 function goToTarget(locationX, locationY) {
     //For now, assume no obstacles and go shortes along edges
     return bruteForceGoToTarget(locationX, locationY);
 }
 
+/**
+ * For HW1, dont worry about cost/obstacles... Will get to that shortly
+ * So until then use this method as a workaround to test out challenge1
+ * @param locationX
+ * @param locationY
+ * @returns {*}
+ */
 function bruteForceGoToTarget(locationX, locationY) {
     let commands = [];
 
@@ -66,6 +82,12 @@ function bruteForceGoToTarget(locationX, locationY) {
 }
 
 
+/**
+ * Generates commands for going foward
+ * @param count
+ * @param commands
+ * @returns {*}
+ */
 function goForward(count, commands) {
     while (count > 0) {
         commands.push(client.AgentAction.moveForward);

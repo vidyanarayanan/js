@@ -58,6 +58,8 @@ function getNewHomeCoordinates(homeLocation, targetLocation) {
 }
 
 
+
+// Interact with the simulation
 const env = "HW1";
 initClient()
     .then((response) => {
