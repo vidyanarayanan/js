@@ -360,48 +360,46 @@ function updatePaths(matrix, topLeft, bottomRight, src, target, direction) {
     let paths =[];
     //path = {"cost":, instructions, isEdge}
 
-    if (src[x] < target[x] ) { // Need to move Eastward
-            if (src[y] < target[y]) { //South East
-                destination = [target[y], target[x] -1]; //Will arrive from the west, so stop one short on the x axis
-                let path1 = {"cost": 0, "commands": []};
-                moveAhead(direction, Direction.South, src[y]+1, target[y], src[x], matrix, path1);
-                moveAhead(Direction.South, Direction.East, src[x]+1, target[x]-1, target[y], matrix, path1);
-                paths.push(path1);
+    if (src[x] < target[x]) { // Need to move Eastward
+        if (src[y] < target[y]) { //South East
+            destination = [target[y], target[x] - 1]; //Will arrive from the west, so stop one short on the x axis
+            let path1 = {"cost": 0, "commands": []};
+            moveAhead(direction, Direction.South, src[y] + 1, target[y], src[x], matrix, path1);
+            moveAhead(Direction.South, Direction.East, src[x] + 1, target[x] - 1, target[y], matrix, path1);
+            paths.push(path1);
 
-                //Option 2, East then South
-                let path2 = {"cost":0, "commands": []};
-                moveAhead(direction, Direction.East, src[x]+1, target[x], src[y], matrix, path2);
-                moveAhead(Direction.East, Direction.South, src[y] +1, target[y] -1, target[x], matrix, path2);
-                paths.push(path2);
+            //Option 2, East then South
+            let path2 = {"cost": 0, "commands": []};
+            moveAhead(direction, Direction.East, src[x] + 1, target[x], src[y], matrix, path2);
+            moveAhead(Direction.East, Direction.South, src[y] + 1, target[y] - 1, target[x], matrix, path2);
+            paths.push(path2);
 
-            } else if (src[y] == target[y]) { // Straight East
-                let path = {"cost": 0, "commands": []};
-                moveAhead(direction, Direction.East, src[x]+1, target[x]-1, src[y], matrix, path);
-                paths.push(path);
-            } else if (src[y] > target[y]) { //Need to move North East
-                // Two options for edge traversal: North then east  or east then north
-                //option 1, north then east
-                // This requires going negative on the index for the row positions...
+        } else if (src[y] == target[y]) { // Straight East
+            let path = {"cost": 0, "commands": []};
+            moveAhead(direction, Direction.East, src[x] + 1, target[x] - 1, src[y], matrix, path);
+            paths.push(path);
+        } else if (src[y] > target[y]) { //Need to move North East
+            // Two options for edge traversal: North then east  or east then north
+            //option 1, north then east
+            // This requires going negative on the index for the row positions...
 
-                let path1 = {"cost": 0, "commands": []};
-                moveAhead(direction, Direction.North, src[y] -1, target[y], src[x], matrix, path1);
-                moveAhead(Direction.North, Direction.East, src[x]+1, target[x]-1, target[y], matrix, path1);
-                paths.push(path1);
-                console.log("option 1 done");
+            let path1 = {"cost": 0, "commands": []};
+            moveAhead(direction, Direction.North, src[y] - 1, target[y], src[x], matrix, path1);
+            moveAhead(Direction.North, Direction.East, src[x] + 1, target[x] - 1, target[y], matrix, path1);
+            paths.push(path1);
+            //Option 2, East then North
+            let path2 = {"cost": 0, "commands": []};
+            moveAhead(direction, Direction.East, src[x] + 1, target[x], src[y], matrix, path2);
+            console.log("option 2, path 1 done");
+            moveAhead(Direction.East, Direction.North, src[y] - 1, target[y] + 1, target[x], matrix, path2);
+            paths.push(path2);
 
-                //Option 2, East then North
-                let path2 = {"cost":0, "commands": []};
-                moveAhead(direction, Direction.East, src[x]+1, target[x], src[y], matrix, path2);
-                console.log("option 2, path 1 done");
-                moveAhead(Direction.East, Direction.North, src[y] -1, target[y] -1, target[x], matrix, path2);
-                paths.push(path2);
+            //
+            //
+            // throw new Error("To be implemented");
+            //
 
-                //
-                //
-                // throw new Error("To be implemented");
-                //
-
-            }
+        }
     } else if (src[x] == target[x]) { // target is on vertical path
         throw new Error("To be implemented");
 
