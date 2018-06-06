@@ -460,8 +460,5 @@ console.log("agent location " + field.agentIndex);
 console.log("paylod location " + field.payloadIndex);
 console.log("home location " + field.homeIndex);
 
-//Todo, convert payload and home to row, column numbers
 let diagonals = generateSubMatrix(field.matrix, field.agentIndex, field.payloadIndex, field.agentDirection);
 //let diagonals = generateSubMatrix(field.matrix, field.agentIndex, field.homeIndex, field.agentDirection);
-
-
