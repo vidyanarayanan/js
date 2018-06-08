@@ -147,7 +147,7 @@ function getAbsoluteIndex(item, agentIndex) {
  * @param agentDir
  */
 function generateCostMatrix(field, src, target, agentDir) {
-    let subMatrix = generateSubMatrix(field.matrix, src, target);
+    let subMatrix = generateCostSpec(field.matrix, src, target);
 }
 
 /**
@@ -160,7 +160,7 @@ function generateCostMatrix(field, src, target, agentDir) {
  * @param direction - the current direction of the agent (typically for our solution, this would always be South, but
  * it helps to keep it generic, just in case)
  */
-function generateSubMatrix(matrix, src, target, direction) {
+function generateCostSpec(matrix, src, target, direction) {
     //No obstacle case - src and target as diagonal opposites
     let topLeftRowId, topLeftColId, bottomRightRowId, bottomRightColId;
     topLeftRowId = Math.min(src[0], target[0]);
@@ -169,7 +169,9 @@ function generateSubMatrix(matrix, src, target, direction) {
     bottomRightColId = Math.max(src[1], target[1]);
     console.log(topLeftRowId + "," + topLeftColId + " ..." + bottomRightRowId + "," + bottomRightColId);
     //[topLeftRowId, topLeftColId] [bottomRightRowId, bottomRightColId],
-    updatePaths(matrix, [topLeftRowId, topLeftColId], [bottomRightRowId, bottomRightColId], src, target, direction);
+
+    let costSpec = updatePaths(matrix, [topLeftRowId, topLeftColId], [bottomRightRowId, bottomRightColId], src, target, direction);
+    printCostSpec(costSpec);
 }
 
 /**
@@ -429,26 +431,33 @@ function updatePaths(matrix, topLeft, bottomRight, src, target, direction) {
 
     console.log("updated matrix ");
     console.log(matrix);
+    let costSpec = {matrix, paths};
+    return costSpec;
+}
 
-    let cheapestEdge = getCheapestPath(paths);
 
-    // If edges dont have obstacles, definitely the cheapest of those is the cheapest
-    // if (!cheapestEdge.hasObstacle) {
-    //     return cheapestEdge;
-    // }
+/**
+ * Temporary method to inspect results
+ * @param costSpec
+ */
+function printCostSpec(costSpec) {
 
+    let cheapestEdge = getCheapestPath(costSpec.paths);
+
+// If edges dont have obstacles, definitely the cheapest of those is the cheapest
+
+    console.log("cheapestEdge has obstacle" + cheapestEdge.hasObstacle);
     console.log(cheapestEdge);
 
     let i = 0;
-    paths.forEach((path) => {
+    costSpec.paths.forEach((path) => {
         console.log("path " + i);
         console.log(path);
         console.log("======");
         i++;
     });
-    return matrix;
-
 }
+
 
 const walls = [["B", 1], ["F", 6],
     ["R", 2], ["L", 5]];
@@ -460,5 +469,9 @@ console.log("agent location " + field.agentIndex);
 console.log("paylod location " + field.payloadIndex);
 console.log("home location " + field.homeIndex);
 
-let diagonals = generateSubMatrix(field.matrix, field.agentIndex, field.payloadIndex, field.agentDirection);
-//let diagonals = generateSubMatrix(field.matrix, field.agentIndex, field.homeIndex, field.agentDirection);
+generateCostSpec(field.matrix, field.agentIndex, field.payloadIndex, field.agentDirection);
+//let costSpec = generateCostSpec(field.matrix, field.agentIndex, field.homeIndex, field.agentDirection);
+
+// printCostSpec(costSpec);
+
+

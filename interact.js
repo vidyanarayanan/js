@@ -70,12 +70,12 @@ initClient()
 
         //TODO convert the following to a function for better testing
         // uncomment these lines and the corresponding close block for these to test more complex positions than the default
-        // let initActions = [client.AgentAction.turnRight, client.AgentAction.moveForward, client.AgentAction.moveForward];
-        // client.executeActionArray(simulationId, agentId, initActions, "1")
-        //     .then(() => {
-        //         client.getAgentStatus(simulationId, agentId)
-        //             .then((initStat) => {
-        //                 response.agentStatus = initStat;
+        let initActions = [client.AgentAction.turnRight, client.AgentAction.moveForward, client.AgentAction.moveForward];
+        client.executeActionArray(simulationId, agentId, initActions, "1")
+            .then(() => {
+                client.getAgentStatus(simulationId, agentId)
+                    .then((initStat) => {
+                        response.agentStatus = initStat;
 
 
         //If this run is not just for resetting the environment, do the pickup and drop off.
@@ -117,8 +117,8 @@ initClient()
                 });
 
         }
-        //         });
-        // });
+                });
+        });
     })
     .catch((error) => {
         console.log("Error Initializing Simulation Client " + error);

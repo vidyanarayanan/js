@@ -4,6 +4,8 @@ const request = require('request');
 const hostname = process.env.SIMULATION_SERVER;
 const apiBase = "https://" + hostname + "/api/";
 
+// TODO make into an object with constructor
+
 /**
  * Actions of an agent
  * @type {{moveForward: string, turnLeft: string, turnRight: string, pickUp: string, drop: string, idle: string}}
@@ -16,7 +18,6 @@ const AgentAction = {
     drop: "drop",
     idle: "idle"
 };
-
 
 /**
  * Creates a simulation environment.
